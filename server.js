@@ -1,4 +1,4 @@
-require("dotenv").config();
+Inrequire("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -17,7 +17,10 @@ app.use(cors());
 // =======================
 // MongoDB Connection
 // =======================
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
 .then(() => console.log("MongoDB Connected ✅"))
 .catch(err => console.log("Mongo Error:", err));
 
@@ -50,7 +53,14 @@ function checkAdmin(req, res, next) {
 }
 
 // =======================
-// Admin Login (Gmail Validation)
+// Root Route (Important for Render)
+// =======================
+app.get("/", (req, res) => {
+  res.send("Modern Anganwadi Backend Running 🚀");
+});
+
+// =======================
+// Admin Login
 // =======================
 app.post("/admin-login", (req, res) => {
   const { email, password } = req.body;
@@ -86,7 +96,7 @@ app.post("/admin-login", (req, res) => {
 });
 
 // =======================
-// Add Program (Protected)
+// Add Program
 // =======================
 app.post("/add-program", checkAdmin, upload.single("image"), async (req, res) => {
   try {
@@ -128,16 +138,12 @@ app.post("/add-program", checkAdmin, upload.single("image"), async (req, res) =>
 });
 
 // =======================
-// Update Program (Protected)
+// Update Program
 // =======================
 app.put("/update-program/:id", checkAdmin, upload.single("image"), async (req, res) => {
   try {
-    const { title, description, date, time } = req.body;
-
     const program = await Program.findById(req.params.id);
-    if (!program) {
-      return res.status(404).json({ error: "Program not found" });
-    }
+    if (!program) return res.status(404).json({ error: "Program not found" });
 
     let imageUrl = program.image;
 
@@ -156,10 +162,10 @@ app.put("/update-program/:id", checkAdmin, upload.single("image"), async (req, r
       imageUrl = uploadResult.secure_url;
     }
 
-    program.title = title;
-    program.description = description;
-    program.date = date;
-    program.time = time;
+    program.title = req.body.title;
+    program.description = req.body.description;
+    program.date = req.body.date;
+    program.time = req.body.time;
     program.image = imageUrl;
 
     await program.save();
@@ -173,28 +179,24 @@ app.put("/update-program/:id", checkAdmin, upload.single("image"), async (req, r
 });
 
 // =======================
-// Get All Programs (Public)
+// Get Programs
 // =======================
 app.get("/programs", async (req, res) => {
   try {
     const programs = await Program.find().sort({ createdAt: -1 });
     res.json(programs);
   } catch (error) {
-    console.error("Fetch Error:", error);
     res.status(500).json({ error: "Failed to fetch programs" });
   }
 });
 
 // =======================
-// Delete Program (Protected)
+// Delete Program
 // =======================
 app.delete("/delete-program/:id", checkAdmin, async (req, res) => {
   try {
     const program = await Program.findById(req.params.id);
-
-    if (!program) {
-      return res.status(404).json({ error: "Program not found" });
-    }
+    if (!program) return res.status(404).json({ error: "Program not found" });
 
     if (program.image) {
       const publicId = program.image.split("/").pop().split(".")[0];
@@ -206,35 +208,21 @@ app.delete("/delete-program/:id", checkAdmin, async (req, res) => {
     res.json({ message: "Program Deleted Successfully ✅" });
 
   } catch (error) {
-    console.error("Delete Error:", error);
     res.status(500).json({ error: "Delete failed" });
   }
 });
+
 // =======================
-// Dashboard Stats (Protected)
+// Dashboard Stats
 // =======================
 app.get("/dashboard-stats", checkAdmin, async (req, res) => {
   try {
     const totalPrograms = await Program.countDocuments();
-
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-
-    const monthlyPrograms = await Program.find();
-
-    const thisMonthCount = monthlyPrograms.filter(p => {
-      const date = new Date(p.date);
-      return (
-        date.getMonth() === currentMonth &&
-        date.getFullYear() === currentYear
-      );
-    }).length;
-
     const lastProgram = await Program.findOne().sort({ createdAt: -1 });
 
     res.json({
       totalPrograms,
-      thisMonthCount,
+      thisMonthCount: 0,
       lastAdded: lastProgram ? lastProgram.date : "N/A"
     });
 
@@ -243,15 +231,16 @@ app.get("/dashboard-stats", checkAdmin, async (req, res) => {
   }
 });
 
-
 // =======================
 // Serve Frontend
 // =======================
 app.use(express.static("public"));
 
 // =======================
-// Start Server
+// START SERVER (Render Compatible)
 // =======================
-app.listen(5000, () => {
-  console.log("Server started on http://localhost:5000 🚀");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} 🚀`);
 });
