@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Anganwadi kendra</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            min-height: 100vh;
+        }
+
+        /* ================= HEADER ================= */
+        header {
+            background: #ff6f00;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        header h1 {
+            font-size: 20px;
+        }
+
+        .logout-btn {
+            background: white;
+            color: #ff6f00;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: none;
+        }
+
+        /* ================= DASHBOARD ================= */
+        .dashboard {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .stat-card p {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff6f00;
+        }
+
+        /* ================= BUTTON ================= */
+        .add-btn {
+            display: block;
+            margin: 20px auto;
+            background: #ff6f00;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* ================= CARDS ================= */
+        .container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card h3 {
+            color: #ff6f00;
+            margin-bottom: 6px;
+        }
+
+        .date {
+            font-size: 13px;
+            color: gray;
+        }
+
+        .action-btn {
+            margin-top: 10px;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .edit-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        .delete-btn {
+            background: red;
+            color: white;
+        }
+
+        /* ================= MODAL ================= */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+        }
+
+        .modal-content input,
+        .modal-content textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+        }
+
+        .close {
+            text-align: right;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* ================= MOBILE ================= */
+        @media(max-width:600px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>🌸 Modern Anganwadi</h1>
+        <button class="logout-btn" onclick="logout()" id="logoutBtn">Logout</button>
+    </header>
+
+    <div class="dashboard" id="dashboard">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Programs</h3>
+                <p id="totalCount">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>This Month</h3>
+                <p id="monthCount">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Last Added</h3>
+                <p id="lastAdded">N/A</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="add-btn" onclick="handleAddClick()">+ Add Program</button>
+
+    <div class="container" id="programContainer"></div>
+
+    <div class="modal" id="programModal">
+        <div class="modal-content">
+            <div class="close" onclick="closeModal()">X</div>
+            <h3 id="modalTitle">Add Program</h3>
+            <input type="text" id="title" placeholder="Program Title">
+            <textarea id="description" placeholder="Description"></textarea>
+            <input type="date" id="date">
+            <input type="text" id="time" placeholder="Time">
+            <input type="file" id="image">
+            <button onclick="saveProgram()">Save</button>
+        </div>
+    </div>
+
+    <script>
+        let editingId = null;
+
+        function checkLogin() {
+            if (localStorage.getItem("adminKey")) {
+                document.getElementById("logoutBtn").style.display = "block";
+                loadStats();
+            }
+        }
+        checkLogin();
+
+        function logout() {
+            localStorage.removeItem("adminKey");
+            location.reload();
+        }
+
+        function handleAddClick() {
+            if (!localStorage.getItem("adminKey")) {
+                window.location.href = "/login.html";
+            } else {
+                editingId = null;
+                document.getElementById("modalTitle").innerText = "Add Program";
+                openModal();
+            }
+        }
+
+        function openModal() {
+            document.getElementById("programModal").style.display = "flex";
+        }
+        function closeModal() {
+            document.getElementById("programModal").style.display = "none";
+        }
+
+        async function loadPrograms() {
+            const res = await fetch("/programs");
+            const programs = await res.json();
+            const container = document.getElementById("programContainer");
+            container.innerHTML = "";
+
+            programs.forEach(program => {
+                const isAdmin = localStorage.getItem("adminKey");
+                const card = document.createElement("div");
+                card.className = "card";
+
+                card.innerHTML = `
+        ${program.image ? `<img src="${program.image}" />` : ""}
+        <div class="card-content">
+            <h3>${program.title}</h3>
+            <p>${program.description}</p>
+            <p class="date">${program.date} | ${program.time}</p>
+            ${isAdmin ? `
+            <button class="action-btn edit-btn"
+            onclick="editProgram('${program._id}','${program.title}','${program.description}','${program.date}','${program.time}')">Edit</button>
+            <button class="action-btn delete-btn"
+            onclick="deleteProgram('${program._id}')">Delete</button>
+            `: ""}
+        </div>
+        `;
+                container.appendChild(card);
+            });
+        }
+
+        async function loadStats() {
+            const res = await fetch("/dashboard-stats", {
+                headers: { adminkey: localStorage.getItem("adminKey") }
+            });
+            const data = await res.json();
+            document.getElementById("dashboard").style.display = "block";
+            document.getElementById("totalCount").innerText = data.totalPrograms;
+            document.getElementById("monthCount").innerText = data.thisMonthCount;
+            document.getElementById("lastAdded").innerText = data.lastAdded;
+        }
+
+        async function saveProgram() {
+            const formData = new FormData();
+            formData.append("title", title.value);
+            formData.append("description", description.value);
+            formData.append("date", date.value);
+            formData.append("time", time.value);
+
+            if (image.files[0]) formData.append("image", image.files[0]);
+
+            let url = "/add-program";
+            let method = "POST";
+            if (editingId) {
+                url = `/update-program/${editingId}`;
+                method = "PUT";
+            }
+
+            await fetch(url, {
+                method,
+                headers: { adminkey: localStorage.getItem("adminKey") },
+                body: formData
+            });
+
+            closeModal();
+            loadPrograms();
+            if (localStorage.getItem("adminKey")) loadStats();
+        }
+
+        function editProgram(id, titleVal, descVal, dateVal, timeVal) {
+            editingId = id;
+            modalTitle.innerText = "Edit Program";
+            title.value = titleVal;
+            description.value = descVal;
+            date.value = dateVal;
+            time.value = timeVal;
+            openModal();
+        }
+
+        async function deleteProgram(id) {
+            if (confirm("Are you sure?")) {
+                await fetch(`/delete-program/${id}`, {
+                    method: "DELETE",
+                    headers: { adminkey: localStorage.getItem("adminKey") }
+                });
+                loadPrograms();
+                loadStats();
+            }
+        }
+
+        loadPrograms();
+    </script>
+
+</body>
+
+</html>

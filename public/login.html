@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login 💛</title>
+
+<style>
+body{
+    font-family:sans-serif;
+    background:linear-gradient(135deg,#ffcc80,#ff6f00);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.login-box{
+    background:white;
+    padding:30px;
+    width:300px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+input{
+    width:100%;
+    padding:8px;
+    margin-bottom:10px;
+}
+button{
+    width:100%;
+    padding:8px;
+    background:#ff6f00;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+.error{
+    color:red;
+    font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-box">
+    <h3>Admin Login 💛</h3>
+    <input type="email" id="email" placeholder="Enter Gmail">
+    <input type="password" id="password" placeholder="Enter Password">
+    <button onclick="login()">Login</button>
+    <p class="error" id="errorMsg"></p>
+</div>
+
+<script>
+async function login(){
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const response = await fetch("/admin-login",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+
+    if(data.success){
+        localStorage.setItem("adminKey", data.adminKey);
+        window.location.href="/";
+    }else{
+        document.getElementById("errorMsg").innerText=data.message;
+    }
+}
+</script>
+
+</body>
+</html>
